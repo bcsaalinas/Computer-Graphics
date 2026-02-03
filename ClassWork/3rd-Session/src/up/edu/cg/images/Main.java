@@ -15,7 +15,7 @@ public class Main {
         for (int i = 0; i < 400; i++){
             for(int j = 0; j < 300; j++){
                 //follow the 4:3 aspect ratio
-                if(2 * j > 3 * i){
+                if(4 * j > 3 * i){
                     //if the pixel is above the diagonal, then draw it red
                     image.setRGB(i, j, Color.RED.getRGB());
                 } else{
