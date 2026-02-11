@@ -10,7 +10,7 @@ public class Clock {
 
         // what time are we showing on the clock
         int hours = 10;
-        int minutes = 5;
+        int minutes = 45;
 
 
         int width = 400;
