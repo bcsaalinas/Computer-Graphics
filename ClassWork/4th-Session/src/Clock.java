@@ -9,8 +9,8 @@ public class Clock {
     public static void main(String[] args){
 
         // what time are we showing on the clock
-        int hours = 10;
-        int minutes = 45;
+        int hours = 6;
+        int minutes = 30;
 
 
         int width = 400;
