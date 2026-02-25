@@ -2,6 +2,8 @@ package edu.up.cg.io;
 
 import java.awt.image.BufferedImage;
 
+
+//class for loading images locally
 public class ImageLoader {
 
     private final String path;

@@ -1,4 +1,15 @@
 package edu.up.cg.operations;
 
-public class ImageCrop {
+import edu.up.cg.model.ImageWrapper;
+
+public class ImageCrop implements ImageOperation {
+
+    @Override
+    public ImageWrapper apply(ImageWrapper image) {
+
+    return image;
+    }
+
+
+
 }

@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+//class for saving images locally
 public class ImageSaver {
 
 
