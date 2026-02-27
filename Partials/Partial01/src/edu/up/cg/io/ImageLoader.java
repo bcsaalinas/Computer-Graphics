@@ -12,13 +12,9 @@ public class ImageLoader {
         this.path = path;
     }
 
-    public BufferedImage loadImage() {
-        try {
-            return javax.imageio.ImageIO.read(new java.io.File(path));
-        } catch (java.io.IOException e) {
-            System.out.println("error loading image: " + e.getMessage());
-            return null;
-        }
+    //load the image from the path and return it as a BufferedImage
+    public BufferedImage loadImage() throws java.io.IOException {
+        return javax.imageio.ImageIO.read(new java.io.File(path));
     }
 
 

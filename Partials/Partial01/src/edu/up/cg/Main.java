@@ -15,7 +15,7 @@ import java.util.Scanner;
 public class Main {
 
 
-    //center dog coordinates are (900,700) and (1300,1700)
+    //center dog coordinates are p1(900,700)  p2(1300,1700)
     public static void main(String[] args) {
 
 
@@ -29,6 +29,9 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         ImageWrapper wrapper = new ImageWrapper(null);
         //save the image in a wrapper so we can apply operations on it and chain them
+
+
+        //keep asking for the path until we can load the image
         while (true) {
             String path = scanner.nextLine();
             try {
@@ -42,7 +45,7 @@ public class Main {
                 System.out.println("Image loaded");
                 wrapper = new ImageWrapper(image);
                 break;
-            } catch (Exception e) {
+            } catch (java.io.IOException e) {
                 System.out.println("Error loading image: " + e.getMessage());
                 System.out.println("Enter a valid image path: ");
             }
@@ -84,10 +87,13 @@ public class Main {
                 case "4":
                     System.out.println("Enter the path to save the image: ");
                     String savePath = scanner.nextLine();
-                    ImageSaver.saveImage(new File(savePath), wrapper.getImage(), "jpg");
+                    System.out.println("Enter the format to save the image ");
+                    String format = scanner.nextLine();
+                    savePath = savePath.endsWith("." + format) ? savePath : savePath + "." + format;
+                    ImageSaver.saveImage(new File(savePath), wrapper.getImage(), format);
                     break;
                 case "5":
-                    System.out.println("Exiting...");
+                    System.out.println("Exiting");
                     break;
                 default:
                     System.out.println("Invalid option");
