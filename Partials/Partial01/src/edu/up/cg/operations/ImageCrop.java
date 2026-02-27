@@ -15,6 +15,9 @@ public class ImageCrop implements ImageOperation {
 
     }
 
+
+
+    //create a new image with the dimensions of the region and copy the pixels from the original image to the new image
     @Override
     public ImageWrapper apply(ImageWrapper image) {
 
