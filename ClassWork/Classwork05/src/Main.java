@@ -99,7 +99,7 @@ public class Main {
         }
     }
 
-    //recieve the api response and return the translated text
+    //receive the api response and return the translated text
     private static String getTranslation(String response) {
         // find the last content field — that's always the assistant's reply
         int startIndex = response.lastIndexOf("\"content\":\"");
