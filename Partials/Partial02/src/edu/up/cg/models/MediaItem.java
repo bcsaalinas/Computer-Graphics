@@ -43,11 +43,24 @@ public class MediaItem {
         return image;
     }
 
+    public void setImage(BufferedImage image) {
+        this.image = image;
+        if (image != null) {
+            this.width = image.getWidth();
+            this.height = image.getHeight();
+        }
+    }
+
     public RawMetadata getRawMetadata() {
         return rawMetadata;
     }
 
     public void setRawMetadata(RawMetadata rawMetadata) {
         this.rawMetadata = rawMetadata;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+        this.filetype = path.substring(path.lastIndexOf(".") + 1);
     }
 }

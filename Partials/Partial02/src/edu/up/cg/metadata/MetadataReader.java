@@ -50,12 +50,18 @@ public class MetadataReader {
 
             String latitudeValue = extractValue(jsonOutput, "GPSLatitude");
             if (latitudeValue != null) {
-                rawMetadata.setLatitude(Double.parseDouble(latitudeValue));
+                Double latitude = parseCoordinate(latitudeValue);
+                if (latitude != null) {
+                    rawMetadata.setLatitude(latitude);
+                }
             }
 
             String longitudeValue = extractValue(jsonOutput, "GPSLongitude");
             if (longitudeValue != null) {
-                rawMetadata.setLongitude(Double.parseDouble(longitudeValue));
+                Double longitude = parseCoordinate(longitudeValue);
+                if (longitude != null) {
+                    rawMetadata.setLongitude(longitude);
+                }
             }
 
             String orientationValue = extractValue(jsonOutput, "Orientation");
@@ -70,6 +76,8 @@ public class MetadataReader {
             e.printStackTrace();
         }
 
+
+        System.out.println("Raw orientation value: " + rawMetadata.getOrientation());
         return rawMetadata;
 
     }
@@ -180,6 +188,82 @@ public class MetadataReader {
                 return 1; // default
         }
 
+    }
+
+    //format coordinates in dms or decimal to decimal format
+    private Double parseCoordinate(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        // if it is already a decimal number, return it directly
+        try {
+            return Double.parseDouble(normalized);
+        } catch (NumberFormatException ignored) {
+            // not a plain number, continue with dms parsing
+        }
+
+        // extract up to 3 numeric parts, degrees, minutes, seconds
+        double[] parts = new double[3];
+        int count = 0;
+        StringBuilder current = new StringBuilder();
+
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
+            boolean numberChar = Character.isDigit(c) || c == '.'
+                    || ((c == '-' || c == '+') && current.length() == 0);
+
+            if (numberChar) {
+                current.append(c);
+            } else if (current.length() > 0) {
+                try {
+                    parts[count] = Double.parseDouble(current.toString());
+                    count++;
+                } catch (NumberFormatException ignored) {
+                    // skip invalid piece
+                }
+                current.setLength(0);
+                if (count == 3) {
+                    break;
+                }
+            }
+        }
+
+        // parse last piece if string ended with a number
+        if (count < 3 && current.length() > 0) {
+            try {
+                parts[count] = Double.parseDouble(current.toString());
+                count++;
+            } catch (NumberFormatException ignored) {
+                // skip invalid piece
+            }
+        }
+
+        if (count == 0) {
+            return null;
+        }
+
+        double degrees = parts[0];
+        double minutes = count > 1 ? parts[1] : 0.0;
+        double seconds = count > 2 ? parts[2] : 0.0;
+
+        // dms to decimal: deg + min/60 + sec/3600
+        double decimal = Math.abs(degrees) + (minutes / 60.0) + (seconds / 3600.0);
+
+        // south and west must be negative
+        String upper = normalized.toUpperCase();
+        if (upper.contains("S") || upper.contains("W")) {
+            decimal = -decimal;
+        } else if (degrees < 0) {
+            decimal = -decimal;
+        }
+
+        return decimal;
     }
 
 }

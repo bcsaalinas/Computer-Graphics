@@ -6,8 +6,14 @@ import java.nio.file.Paths;
 public class ImageConverter {
 
     public String convertToJpeg(String inputPath) throws Exception {
-        String convertedPath = buildConvertedPath(inputPath);
-        ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-i", inputPath, convertedPath);
+        Path input = Paths.get(inputPath).toAbsolutePath().normalize();
+        String convertedPath = buildConvertedPath(input);
+        ProcessBuilder pb = new ProcessBuilder(
+                "ffmpeg", "-i", input.toString(),
+                "-frames:v", "1",
+                "-update", "1",
+                convertedPath
+        );
         pb.redirectErrorStream(true);
 
         Process process = pb.start();
@@ -19,8 +25,7 @@ public class ImageConverter {
         return convertedPath;
     }
 
-    private String buildConvertedPath(String inputPath) {
-        Path input = Paths.get(inputPath).toAbsolutePath().normalize();
+    private String buildConvertedPath(Path input) {
         String fileName = input.getFileName().toString();
 
         // determine extension from file name only so dots in folders do not affect parsing
