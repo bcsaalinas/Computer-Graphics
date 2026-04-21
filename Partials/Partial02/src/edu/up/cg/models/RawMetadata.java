@@ -7,6 +7,7 @@ public class RawMetadata {
     private double latitude;
     private double longitude;
     private int orientation;
+    private boolean hasGps = false;
 
     public LocalDateTime getDate() {
         return date;
@@ -38,5 +39,13 @@ public class RawMetadata {
 
     public void setOrientation(int orientation) {
         this.orientation = orientation;
+    }
+
+    public boolean hasGps() {
+        return hasGps;
+    }
+
+    public void setHasGps(boolean hasGps) {
+        this.hasGps = hasGps;
     }
 }

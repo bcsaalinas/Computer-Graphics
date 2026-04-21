@@ -16,25 +16,34 @@ public class MediaLoader {
         RawMetadata rawMetadata = metadataReader.readMetadata(path);
 
         boolean isVideo = MediaFormats.isVideoFile(path);
+        ImageConverter imageConverter = new ImageConverter();
+        ImageScaler imageScaler = new ImageScaler();
 
-        // use original path for videos, convert only images
-        String mediaPath = path;
-        if (!isVideo) {
-            ImageConverter imageConverter = new ImageConverter();
-            mediaPath = imageConverter.convertToJpeg(path);
+        if (isVideo) {
+            // keep the original video path so the assembler can use the full clip later
+            MediaItem mediaItem = new MediaItem(path);
+
+            // extract the first frame as a JPEG so we can describe the video with AI
+            String thumbnailPath = imageConverter.convertToJpeg(path);
+            MediaItem thumbnail = new MediaItem(thumbnailPath);
+            if (thumbnail.getImage() != null) {
+                mediaItem.setImage(imageScaler.scaleImage(thumbnail.getImage()));
+            }
+
+            mediaItem.setRawMetadata(rawMetadata);
+            return mediaItem;
+        } else {
+            String jpegPath = imageConverter.convertToJpeg(path);
+            MediaItem mediaItem = new MediaItem(jpegPath);
+
+            if (mediaItem.getImage() != null) {
+                mediaItem.setImage(imageScaler.scaleImage(mediaItem.getImage()));
+                ImageIO.write(mediaItem.getImage(), "jpg", new File(jpegPath));
+            }
+
+            mediaItem.setRawMetadata(rawMetadata);
+            return mediaItem;
         }
-
-        MediaItem mediaItem = new MediaItem(mediaPath);
-
-        // scale only for image inputs, skip for videos
-        if (!isVideo && mediaItem.getImage() != null) {
-            ImageScaler imageScaler = new ImageScaler();
-            mediaItem.setImage(imageScaler.scaleImage(mediaItem.getImage()));
-            ImageIO.write(mediaItem.getImage(), "jpg", new File(mediaPath));
-        }
-
-        mediaItem.setRawMetadata(rawMetadata);
-        return mediaItem;
     }
 
 }

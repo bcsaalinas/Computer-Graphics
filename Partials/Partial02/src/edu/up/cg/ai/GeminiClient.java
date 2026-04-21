@@ -2,6 +2,8 @@ package edu.up.cg.ai;
 
 import edu.up.cg.models.MediaItem;
 
+import java.util.List;
+
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.nio.file.Files;
@@ -27,6 +29,22 @@ public class GeminiClient {
         String base64Image = encodeImageToBase64(item);
         String prompt = "Describe this photo in 2 to 3 sentences as if you are narrating a travel video. Be vivid and engaging. Do not mention technical details like resolution or file format.";
         String requestBody = buildVisionRequest(prompt, base64Image);
+        String response = sendRequest(requestBody);
+        return extractText(response);
+    }
+
+    //generate the escence of all the images on our mediaitems list
+    public String generateEssencePrompt(List<String> descriptions) throws Exception {
+        StringBuilder joined = new StringBuilder();
+        for (int i = 0; i < descriptions.size(); i++) {
+            joined.append(i + 1).append(". ").append(descriptions.get(i)).append(" ");
+        }
+
+        String prompt = "You are given a list of descriptions of photos from a trip:\n"
+                + joined.toString().trim()
+                + "\nWrite a single short image generation prompt (1-2 sentences) that captures the overall essence and mood of this journey. Only output the prompt, nothing else.";
+
+        String requestBody = buildTextRequest(prompt);
         String response = sendRequest(requestBody);
         return extractText(response);
     }
@@ -124,7 +142,14 @@ public class GeminiClient {
             }
         }
 
-        return text.toString().trim();
+        String result = text.toString().trim();
+
+        // Gemini sometimes wraps the response in literal quotes — strip them if present
+        if (result.startsWith("\"") && result.endsWith("\"") && result.length() >= 2) {
+            result = result.substring(1, result.length() - 1);
+        }
+
+        return result;
     }
 
     // escapes special characters so the string can be safely embedded inside a JSON value

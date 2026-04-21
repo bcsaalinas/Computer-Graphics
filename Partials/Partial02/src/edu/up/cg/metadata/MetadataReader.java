@@ -43,20 +43,27 @@ public class MetadataReader {
                 }
             }
 
+            Double latitude = null;
             String latitudeValue = extractValue(jsonOutput, "GPSLatitude");
             if (latitudeValue != null) {
-                Double latitude = parseCoordinate(latitudeValue);
+                latitude = parseCoordinate(latitudeValue);
                 if (latitude != null) {
                     rawMetadata.setLatitude(latitude);
                 }
             }
 
+            Double longitude = null;
             String longitudeValue = extractValue(jsonOutput, "GPSLongitude");
             if (longitudeValue != null) {
-                Double longitude = parseCoordinate(longitudeValue);
+                longitude = parseCoordinate(longitudeValue);
                 if (longitude != null) {
                     rawMetadata.setLongitude(longitude);
                 }
+            }
+
+            // only mark GPS as available when both coordinates were actually found
+            if (latitude != null && longitude != null) {
+                rawMetadata.setHasGps(true);
             }
 
             String orientationValue = extractValue(jsonOutput, "Orientation");

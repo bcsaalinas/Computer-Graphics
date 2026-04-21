@@ -13,6 +13,7 @@ public class MediaItem {
     private int height;
     private BufferedImage image;
     private RawMetadata rawMetadata;
+    private String audioPath;
 
     public MediaItem(String path) throws IOException {
         this.path = path;
@@ -71,7 +72,20 @@ public class MediaItem {
         this.filetype = path.substring(path.lastIndexOf(".") + 1);
     }
 
-    //check if the file is an image, to handle videos later
+    public String getAudioPath() {
+        return audioPath;
+    }
+
+    public void setAudioPath(String audioPath) {
+        this.audioPath = audioPath;
+    }
+
+    public boolean isVideo() {
+        String lowerType = filetype.toLowerCase();
+        return lowerType.equals("mp4") || lowerType.equals("mov") || lowerType.equals("avi")
+                || lowerType.equals("mkv") || lowerType.equals("wmv") || lowerType.equals("m4v");
+    }
+
     private boolean isImage(String filetype){
         String lowerType = filetype.toLowerCase();
         return lowerType.equals("jpg") || lowerType.equals("jpeg") || lowerType.equals("png");
