@@ -9,7 +9,7 @@ public class ImageConverter {
         Path input = Paths.get(inputPath).toAbsolutePath().normalize();
         String convertedPath = buildConvertedPath(input);
         ProcessBuilder pb = new ProcessBuilder(
-                "ffmpeg", "-i", input.toString(),
+                "ffmpeg", "-y", "-i", input.toString(),
                 "-frames:v", "1",
                 "-update", "1",
                 convertedPath

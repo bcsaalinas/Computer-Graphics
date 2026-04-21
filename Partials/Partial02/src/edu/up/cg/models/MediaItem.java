@@ -16,11 +16,18 @@ public class MediaItem {
 
     public MediaItem(String path) throws IOException {
         this.path = path;
-        this.image = ImageIO.read(new File(path));
         this.filetype = path.substring(path.lastIndexOf(".") + 1);
-        this.width = image.getWidth();
-        this.height = image.getHeight();
         this.rawMetadata = new RawMetadata();
+
+
+        if(isImage(filetype)){
+            this.image = ImageIO.read(new File(path));
+            if (image != null) {
+                this.width = image.getWidth();
+                this.height = image.getHeight();
+            }
+        }
+
     }
 
     public String getPath() {
@@ -62,5 +69,11 @@ public class MediaItem {
     public void setPath(String path) {
         this.path = path;
         this.filetype = path.substring(path.lastIndexOf(".") + 1);
+    }
+
+    //check if the file is an image, to handle videos later
+    private boolean isImage(String filetype){
+        String lowerType = filetype.toLowerCase();
+        return lowerType.equals("jpg") || lowerType.equals("jpeg") || lowerType.equals("png");
     }
 }

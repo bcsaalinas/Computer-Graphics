@@ -6,25 +6,33 @@ import edu.up.cg.metadata.MetadataReader;
 import edu.up.cg.models.MediaItem;
 import edu.up.cg.models.RawMetadata;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+
 public class MediaLoader {
 
     public MediaItem loadMedia(String path) throws Exception {
-        // read raw metadata from original file
         MetadataReader metadataReader = new MetadataReader();
         RawMetadata rawMetadata = metadataReader.readMetadata(path);
 
-        // convert file to jpeg and get converted path
-        ImageConverter imageConverter = new ImageConverter();
-        String convertedPath = imageConverter.convertToJpeg(path);
+        boolean isVideo = MediaFormats.isVideoFile(path);
 
-        // create media item from converted file
-        MediaItem mediaItem = new MediaItem(convertedPath);
+        // use original path for videos, convert only images
+        String mediaPath = path;
+        if (!isVideo) {
+            ImageConverter imageConverter = new ImageConverter();
+            mediaPath = imageConverter.convertToJpeg(path);
+        }
 
-        // scale the image and update the item
-        ImageScaler imageScaler = new ImageScaler();
-        mediaItem.setImage(imageScaler.scaleImage(mediaItem.getImage()));
+        MediaItem mediaItem = new MediaItem(mediaPath);
 
-        // attach metadata and return
+        // scale only for image inputs, skip for videos
+        if (!isVideo && mediaItem.getImage() != null) {
+            ImageScaler imageScaler = new ImageScaler();
+            mediaItem.setImage(imageScaler.scaleImage(mediaItem.getImage()));
+            ImageIO.write(mediaItem.getImage(), "jpg", new File(mediaPath));
+        }
+
         mediaItem.setRawMetadata(rawMetadata);
         return mediaItem;
     }
