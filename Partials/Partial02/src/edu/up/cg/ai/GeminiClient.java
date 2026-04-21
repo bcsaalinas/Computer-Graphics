@@ -20,7 +20,6 @@ public class GeminiClient {
         if (this.apiKey == null || this.apiKey.isEmpty()) {
             throw new RuntimeException("GEMINI_API_KEY environment variable is not set");
         }
-        System.out.println("API key loaded, length: " + this.apiKey.length());
     }
 
     // generates a short spoken description of a media item for the video narration
@@ -61,7 +60,6 @@ public class GeminiClient {
         File tempFile = File.createTempFile("gemini_request", ".json");
         Files.writeString(tempFile.toPath(), requestBody);
 
-        System.out.println("Sending request to Gemini...");
         ProcessBuilder pb = new ProcessBuilder(
                 "curl", "-s", "--max-time", "30", "-X", "POST",
                 API_URL,
@@ -81,10 +79,6 @@ public class GeminiClient {
 
         int exitCode = process.waitFor();
         tempFile.delete();
-
-        System.out.println("---- Gemini raw response start ----");
-        System.out.println(response);
-        System.out.println("---- Gemini raw response end ----");
 
         if (exitCode != 0) {
             throw new RuntimeException("curl failed with exit code: " + exitCode);

@@ -30,12 +30,7 @@ public class MetadataReader {
                 throw new RuntimeException("exiftool failed : " + exitCode);
             }
 
-            // parse the output and update rawMetadata with the metadata information we just got
             String jsonOutput = output.toString();
-            System.out.println("---- exiftool raw output start ----");
-            System.out.println(jsonOutput);
-            System.out.println("---- exiftool raw output end ----");
-
             String dateValue = extractValue(jsonOutput, "DateTimeOriginal");
             if (dateValue == null) {
                 dateValue = extractValue(jsonOutput, "CreateDate");
@@ -76,8 +71,6 @@ public class MetadataReader {
             e.printStackTrace();
         }
 
-
-        System.out.println("Raw orientation value: " + rawMetadata.getOrientation());
         return rawMetadata;
 
     }
