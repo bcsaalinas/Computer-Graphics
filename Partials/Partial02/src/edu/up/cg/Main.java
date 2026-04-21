@@ -2,6 +2,7 @@ package edu.up.cg;
 
 import edu.up.cg.ai.GeminiClient;
 import edu.up.cg.ai.GeminiTTS;
+import edu.up.cg.ai.GeminiImage;
 import edu.up.cg.io.MediaCollection;
 import edu.up.cg.models.MediaItem;
 
@@ -20,6 +21,7 @@ public class Main {
 
             GeminiClient gemini = new GeminiClient();
             GeminiTTS tts = new GeminiTTS();
+            GeminiImage imageGen = new GeminiImage();
             List<String> descriptions = new ArrayList<>();
 
             for (int i = 0; i < items.size(); i++) {
@@ -43,9 +45,12 @@ public class Main {
                 System.out.println("Audio saved to: " + audioPath);
             }
 
-            // generate the essence prompt that will be used for the opening image
+            // generate the essence prompt and use it to create the opening image
             String essencePrompt = gemini.generateEssencePrompt(descriptions);
             System.out.println("\nEssence prompt: " + essencePrompt);
+
+            String openingImagePath = imageGen.generateImage(essencePrompt, "opening_image.png");
+            System.out.println("Opening image saved to: " + openingImagePath);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
