@@ -1,8 +1,8 @@
 package edu.up.cg;
 
-import edu.up.cg.ai.GeminiClient;
-import edu.up.cg.ai.GeminiImage;
-import edu.up.cg.ai.GeminiTTS;
+import edu.up.cg.ai.OpenAIClient;
+import edu.up.cg.ai.OpenAIImage;
+import edu.up.cg.ai.OpenAITTS;
 import edu.up.cg.io.MediaCollection;
 import edu.up.cg.map.MapGenerator;
 import edu.up.cg.models.MediaItem;
@@ -15,15 +15,14 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            // load and sort all media from the test folder
             MediaCollection collection = new MediaCollection();
             List<MediaItem> items = collection.loadFromFolder("test_media");
 
             System.out.println("Found " + items.size() + " media items");
 
-            GeminiClient gemini = new GeminiClient();
-            GeminiTTS tts = new GeminiTTS();
-            GeminiImage imageGen = new GeminiImage();
+            OpenAIClient client = new OpenAIClient();
+            OpenAITTS tts = new OpenAITTS();
+            OpenAIImage imageGen = new OpenAIImage();
             List<String> descriptions = new ArrayList<>();
 
             for (int i = 0; i < items.size(); i++) {
@@ -35,33 +34,28 @@ public class Main {
                 System.out.println("Date:    " + item.getRawMetadata().getDate());
                 System.out.println("Has GPS: " + item.getRawMetadata().hasGps());
 
-                // generate spoken description for this item
-                String description = gemini.generateMediaDescription(item);
+                String description = client.generateMediaDescription(item);
                 descriptions.add(description);
                 System.out.println("Description: " + description);
 
-                // convert the description to audio, save it, and store the path on the item
                 String audioPath = "audio_" + (i + 1) + ".wav";
                 tts.generateAudio(description, audioPath);
                 item.setAudioPath(audioPath);
                 System.out.println("Audio saved to: " + audioPath);
             }
 
-            // generate the essence prompt and use it to create the opening image
-            String essencePrompt = gemini.generateEssencePrompt(descriptions);
+            String essencePrompt = client.generateEssencePrompt(descriptions);
             System.out.println("\nEssence prompt: " + essencePrompt);
 
             String openingImagePath = imageGen.generateImage(essencePrompt, "opening_image.png");
             System.out.println("Opening image saved to: " + openingImagePath);
 
-            // find the first and last items that actually have GPS data for the map
+            // find the first and last items that have GPS data
             MediaItem firstWithGps = null;
             MediaItem lastWithGps = null;
             for (MediaItem item : items) {
                 if (item.getRawMetadata().hasGps()) {
-                    if (firstWithGps == null) {
-                        firstWithGps = item;
-                    }
+                    if (firstWithGps == null) firstWithGps = item;
                     lastWithGps = item;
                 }
             }
@@ -70,14 +64,13 @@ public class Main {
                 RawMetadata first = firstWithGps.getRawMetadata();
                 RawMetadata last  = lastWithGps.getRawMetadata();
 
-                String inspirationPhrase = gemini.generateInspirationPhrase(
+                String inspirationPhrase = client.generateInspirationPhrase(
                         first.getLatitude(), first.getLongitude(),
                         last.getLatitude(),  last.getLongitude()
                 );
                 System.out.println("\nInspiration phrase: " + inspirationPhrase);
 
-                MapGenerator mapGenerator = new MapGenerator();
-                String mapPath = mapGenerator.generateMap(
+                String mapPath = new MapGenerator().generateMap(
                         first.getLatitude(), first.getLongitude(),
                         last.getLatitude(),  last.getLongitude(),
                         "map.png"

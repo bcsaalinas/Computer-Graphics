@@ -2,25 +2,23 @@ package edu.up.cg.ai;
 
 import edu.up.cg.models.MediaItem;
 
-import java.util.List;
-
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.List;
 
-// handles all text generation calls to the Gemini API
-public class GeminiClient {
+// handles all text generation calls to the OpenAI API
+public class OpenAIClient {
 
-    private static final String API_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    private static final String API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final String apiKey;
 
-    public GeminiClient() {
-        this.apiKey = System.getenv("GEMINI_API_KEY");
+    public OpenAIClient() {
+        this.apiKey = System.getenv("OPEN_API_KEY");
         if (this.apiKey == null || this.apiKey.isEmpty()) {
-            throw new RuntimeException("GEMINI_API_KEY environment variable is not set");
+            throw new RuntimeException("OPEN_API_KEY environment variable is not set");
         }
     }
 
@@ -33,7 +31,7 @@ public class GeminiClient {
         return extractText(response);
     }
 
-    //generate the escence of all the images on our mediaitems list
+    // takes all per-item descriptions and returns an image generation prompt that captures the essence of the whole journey
     public String generateEssencePrompt(List<String> descriptions) throws Exception {
         StringBuilder joined = new StringBuilder();
         for (int i = 0; i < descriptions.size(); i++) {
@@ -61,27 +59,29 @@ public class GeminiClient {
 
     // builds the JSON request body for a text-only prompt
     private String buildTextRequest(String prompt) {
-        return "{\"contents\":[{\"parts\":[{\"text\":\"" + escapeJson(prompt) + "\"}]}]}";
+        return "{\"model\":\"gpt-4o\","
+                + "\"messages\":[{\"role\":\"user\",\"content\":\"" + escapeJson(prompt) + "\"}]}";
     }
 
     // builds the JSON request body for a prompt that includes an image
     private String buildVisionRequest(String prompt, String base64Image) {
-        return "{\"contents\":[{\"parts\":["
-                + "{\"text\":\"" + escapeJson(prompt) + "\"},"
-                + "{\"inline_data\":{\"mime_type\":\"image/jpeg\",\"data\":\"" + base64Image + "\"}}"
+        return "{\"model\":\"gpt-4o\","
+                + "\"messages\":[{\"role\":\"user\",\"content\":["
+                + "{\"type\":\"text\",\"text\":\"" + escapeJson(prompt) + "\"},"
+                + "{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64," + base64Image + "\"}}"
                 + "]}]}";
     }
 
-    // writes the request body to a temp file and runs curl to call the Gemini API
-    // use a file instead of passing the body directly because base64 images can be very large
+    // writes the request body to a temp file and runs curl to call the OpenAI API
+    // we use a file instead of passing the body directly because base64 images can be very large
     private String sendRequest(String requestBody) throws Exception {
-        File tempFile = File.createTempFile("gemini_request", ".json");
+        File tempFile = File.createTempFile("openai_request", ".json");
         Files.writeString(tempFile.toPath(), requestBody);
 
         ProcessBuilder pb = new ProcessBuilder(
-                "curl", "-s", "--max-time", "30", "-X", "POST",
+                "curl", "-s", "--max-time", "60", "-X", "POST",
                 API_URL,
-                "-H", "x-goog-api-key: " + apiKey,
+                "-H", "Authorization: Bearer " + apiKey,
                 "-H", "Content-Type: application/json",
                 "-d", "@" + tempFile.getAbsolutePath()
         );
@@ -112,16 +112,24 @@ public class GeminiClient {
         return Base64.getEncoder().encodeToString(byteStream.toByteArray());
     }
 
-    // pulls the generated text out of the Gemini JSON response
+    // pulls the generated text out of the OpenAI JSON response
     private String extractText(String jsonResponse) {
-        String key = "\"text\":";
-        int keyIndex = jsonResponse.indexOf(key);
-        if (keyIndex == -1) {
-            throw new RuntimeException("Gemini response did not contain a text field: " + jsonResponse);
+        // the response text lives inside choices[0].message.content
+        // find "message" first, then "content" after it to avoid matching other content fields
+        String messageKey = "\"message\":";
+        int messageIndex = jsonResponse.indexOf(messageKey);
+        if (messageIndex == -1) {
+            throw new RuntimeException("OpenAI response did not contain a message field: " + jsonResponse);
+        }
+
+        String contentKey = "\"content\":";
+        int contentIndex = jsonResponse.indexOf(contentKey, messageIndex);
+        if (contentIndex == -1) {
+            throw new RuntimeException("OpenAI response did not contain a content field: " + jsonResponse);
         }
 
         // move past the key and the opening quote of the value
-        int start = jsonResponse.indexOf('"', keyIndex + key.length()) + 1;
+        int start = jsonResponse.indexOf('"', contentIndex + contentKey.length()) + 1;
 
         StringBuilder text = new StringBuilder();
         for (int i = start; i < jsonResponse.length(); i++) {
@@ -142,14 +150,7 @@ public class GeminiClient {
             }
         }
 
-        String result = text.toString().trim();
-
-        // Gemini sometimes wraps the response in literal quotes — strip them if present
-        if (result.startsWith("\"") && result.endsWith("\"") && result.length() >= 2) {
-            result = result.substring(1, result.length() - 1);
-        }
-
-        return result;
+        return text.toString().trim();
     }
 
     // escapes special characters so the string can be safely embedded inside a JSON value

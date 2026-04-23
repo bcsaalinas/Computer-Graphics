@@ -32,6 +32,11 @@ public class MediaCollection {
                 continue;
             }
 
+            // skip intermediate files that MediaLoader generates when converting videos
+            if (file.getName().endsWith("_converted.jpg")) {
+                continue;
+            }
+
             String filePath = file.getAbsolutePath();
             if (!MediaFormats.isValidMediaFile(filePath)) {
                 continue;

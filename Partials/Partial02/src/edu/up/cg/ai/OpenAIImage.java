@@ -4,18 +4,17 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.Base64;
 
-// generates images from text prompts using the Imagen API
-public class GeminiImage {
+// generates images from text prompts using the OpenAI DALL-E API
+public class OpenAIImage {
 
-    private static final String IMAGE_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
+    private static final String IMAGE_URL = "https://api.openai.com/v1/images/generations";
 
     private final String apiKey;
 
-    public GeminiImage() {
-        this.apiKey = System.getenv("GEMINI_API_KEY");
+    public OpenAIImage() {
+        this.apiKey = System.getenv("OPEN_API_KEY");
         if (this.apiKey == null || this.apiKey.isEmpty()) {
-            throw new RuntimeException("GEMINI_API_KEY environment variable is not set");
+            throw new RuntimeException("OPEN_API_KEY environment variable is not set");
         }
     }
 
@@ -28,21 +27,25 @@ public class GeminiImage {
         return outputPath;
     }
 
-    //builds the JSON request body for the Imagen API
+    // builds the JSON request body for the DALL-E API
     private String buildRequest(String prompt) {
-        return "{\"instances\":[{\"prompt\":\"" + escapeJson(prompt) + "\"}],"
-                + "\"parameters\":{\"sampleCount\":1,\"aspectRatio\":\"9:16\"}}";
+        // 1024x1792 is the only portrait size DALL-E 3 supports
+        return "{\"model\":\"dall-e-3\","
+                + "\"prompt\":\"" + escapeJson(prompt) + "\","
+                + "\"n\":1,"
+                + "\"size\":\"1024x1792\","
+                + "\"response_format\":\"b64_json\"}";
     }
 
-    // writes the request body to a temp file and calls the Imagen API via curl
+    // writes the request body to a temp file and calls the DALL-E API via curl
     private String sendRequest(String requestBody) throws Exception {
-        File tempFile = File.createTempFile("imagen_request", ".json");
+        File tempFile = File.createTempFile("dalle_request", ".json");
         Files.writeString(tempFile.toPath(), requestBody);
 
         ProcessBuilder pb = new ProcessBuilder(
-                "curl", "-s", "--max-time", "60", "-X", "POST",
+                "curl", "-s", "--max-time", "120", "-X", "POST",
                 IMAGE_URL,
-                "-H", "x-goog-api-key: " + apiKey,
+                "-H", "Authorization: Bearer " + apiKey,
                 "-H", "Content-Type: application/json",
                 "-d", "@" + tempFile.getAbsolutePath()
         );
@@ -66,23 +69,22 @@ public class GeminiImage {
         return response.toString();
     }
 
-    // pulls the base64 image data out of the Imagen JSON response and decodes it to bytes
+    // pulls the base64 image data out of the DALL-E JSON response and decodes it to bytes
     private byte[] extractImageBytes(String jsonResponse) {
-        String key = "\"bytesBase64Encoded\":";
+        String key = "\"b64_json\":";
         int keyIndex = jsonResponse.indexOf(key);
         if (keyIndex == -1) {
-            throw new RuntimeException("Imagen response did not contain image data: " + jsonResponse);
+            throw new RuntimeException("DALL-E response did not contain image data: " + jsonResponse);
         }
 
         // move past the key and the opening quote, then read until the closing quote
         int start = jsonResponse.indexOf('"', keyIndex + key.length()) + 1;
         int end = jsonResponse.indexOf('"', start);
 
-        String base64Data = jsonResponse.substring(start, end);
-        return Base64.getDecoder().decode(base64Data);
+        return Base64.getDecoder().decode(jsonResponse.substring(start, end));
     }
 
-    //writes the decoded image bytes to disk as a png file
+    // writes the decoded image bytes to disk as a PNG file
     private void saveImage(byte[] imageBytes, String outputPath) throws Exception {
         FileOutputStream fos = new FileOutputStream(outputPath);
         fos.write(imageBytes);
