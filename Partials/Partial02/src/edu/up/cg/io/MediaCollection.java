@@ -19,25 +19,30 @@ public class MediaCollection {
         }
 
         File[] files = folder.listFiles();
-        List<MediaItem> items = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
 
-        if (files == null) {
-            return items;
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    paths.add(file.getAbsolutePath());
+                }
+            }
         }
 
+        return loadFromFiles(paths);
+    }
+
+    // load valid media from an explicit list of file paths and sort by metadata date
+    public List<MediaItem> loadFromFiles(List<String> filePaths) throws Exception {
+        List<MediaItem> items = new ArrayList<>();
         MediaLoader mediaLoader = new MediaLoader();
 
-        for (File file : files) {
-            if (!file.isFile()) {
-                continue;
-            }
-
+        for (String filePath : filePaths) {
             // skip intermediate files that MediaLoader generates when converting videos
-            if (file.getName().endsWith("_converted.jpg")) {
+            if (filePath.endsWith("_converted.jpg")) {
                 continue;
             }
 
-            String filePath = file.getAbsolutePath();
             if (!MediaFormats.isValidMediaFile(filePath)) {
                 continue;
             }
