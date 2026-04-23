@@ -1,46 +1,40 @@
 # Video Creator
-Java pipeline that turns a collection of geotagged photos and videos into a narrated vertical travel video.
 
-## Dependencies
-The following tools must be installed and available in your system `PATH`:
+Java app that turns geotagged photos and videos into a narrated portrait travel video (1080×1920).
 
-- [ExifTool](https://exiftool.org) — metadata extraction
+## Requirements
+
+Install and make available in your `PATH`:
+
+- [ExifTool](https://exiftool.org) — reads GPS and date metadata
 - [FFmpeg](https://ffmpeg.org) — media conversion and video assembly
 
-## Environment
-```bash
-export GEMINI_API_KEY="your_key_here"
-```
+## Environment variables
 
-## Build
 ```bash
-cd Partial02
-mkdir -p out
-javac -d out src/edu/up/cg/**/*.java src/edu/up/cg/Main.java
+export OPEN_API_KEY="your_openai_key"
+export MAPBOX_TOKEN="your_mapbox_token"
 ```
-
-## Run
-```bash
-java -cp out edu.up.cg.Main /absolute/path/to/input /absolute/path/to/output.mp4
-```
-
-If the output path is omitted, the program writes `travel_video.mp4` inside the input directory.
 
 ## Supported formats
-| Type   | Formats         |
-|--------|-----------------|
-| Images | `.jpg`, `.jpeg`, `.png` |
-| Videos | `.mp4`, `.mov`  |
 
-> **Note:** HEIC images are not supported. Convert them to JPEG before use.
-> - **Mac:** right-click → Quick Actions → Convert Image → JPEG
-> - **Windows:** open in Photos app → Save as → JPEG
+| Type   | Extensions |
+|--------|------------|
+| Images | `.jpg` `.jpeg` `.png` |
+| Videos | `.mp4` `.mov` `.avi` `.mkv` `.wmv` `.m4v` |
 
 ## How it works
-1. Reads GPS and date metadata from each file using ExifTool
-2. Converts all media to JPEG/MP4 using FFmpeg
-3. Sorts media oldest to newest by EXIF date
-4. Generates an AI intro image using the Gemini API
-5. Generates voice descriptions for each media item
-6. Renders a portrait video (1080×1920) with narration
-7. Closes with a map showing first and last GPS location and an AI-generated inspirational phrase
+
+1. User selects media files via the GUI
+2. ExifTool reads GPS coordinates and capture date from each file
+3. Files are sorted oldest to newest
+4. OpenAI GPT-4o describes each photo/video for narration
+5. OpenAI TTS converts each description to audio (loudness-normalized to YouTube standards)
+6. DALL-E 3 generates an opening image capturing the essence of the journey
+7. Mapbox generates a map pinpointing the first and last GPS location
+8. OpenAI generates an inspirational phrase for the map slide
+9. FFmpeg assembles everything into a single portrait MP4
+
+## Output
+
+The final video and generated assets (`opening_image.png`, `map.png`) are saved in the same folder as the input files.
